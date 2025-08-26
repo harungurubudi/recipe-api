@@ -1,6 +1,7 @@
 export default () => ({
   // server configuration
   port: parseInt(process.env.APP_PORT ?? "3000", 10),
+  environment: process.env.NODE_ENV ?? "development",
   // database configuration
   database: {
     host: process.env.DATABASE_HOST ?? "localhost",
