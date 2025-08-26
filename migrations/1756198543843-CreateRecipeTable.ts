@@ -3,9 +3,9 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class CreateRecipeTable1756198543843 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`
-        DROP TABLE IF EXISTS recipes;
+      await queryRunner.query(`DROP TABLE IF EXISTS recipes;`)
 
+      await queryRunner.query(`
         CREATE TABLE IF NOT EXISTS recipes (
           id integer PRIMARY KEY AUTO_INCREMENT,
           title varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -15,8 +15,9 @@ export class CreateRecipeTable1756198543843 implements MigrationInterface {
           cost integer NOT NULL,
           created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updated_at datetime on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
+        );`)
 
+      await queryRunner.query(`
         INSERT INTO recipes (
           id, title, making_time, serves, ingredients, cost, created_at, updated_at
         ) VALUES
