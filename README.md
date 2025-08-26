@@ -19,12 +19,26 @@ This project was developed as part of the Givery recruitment assignment.
    ```
    npm install
    ```
-3. Configure database. Copy the ``.env.example`` to ``.env``. You can adjust with your own configuration if needed. 
+3. Run [Docker Compose setup](#docker-compose-setup)
 4. Run the application
    ```
    npm run start:dev
    ```
    The migration will start on first run automatically.
+
+### Docker Compose Setup
+
+This project uses Docker Compose to run PostgreSQL for local development.
+
+1. Copy `.env.example` to `.env` and update the variables if needed.
+2. Start the database container:
+   ```bash
+   docker-compose up -d
+   ```
+3. Stop containers:
+   ```bash
+   docker-compose down
+   ```
 
 ### Usage
 
