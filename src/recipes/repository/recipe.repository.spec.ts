@@ -4,6 +4,7 @@ import { RecipeEntity } from './entities/recipe.entity';
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Recipe, RecipeID } from '../domain/recipe.entity';
+import { ok, error } from '../../shared/result';
 
 describe('TypeOrmRecipeRepository-GetByID', () => {
   let repo: TypeOrmRecipeRepository;
@@ -37,7 +38,7 @@ describe('TypeOrmRecipeRepository-GetByID', () => {
     const result = await repo.getByID(RecipeID.of(id));
 
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
-    expect(result).toEqual(expected);
+    expect(result).toEqual(ok(expected));
   });
 
   it('should return null if recipe not found', async () => {
@@ -48,6 +49,6 @@ describe('TypeOrmRecipeRepository-GetByID', () => {
     const result = await repo.getByID(RecipeID.of(id));
 
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
-    expect(result).toEqual(expected);
+    expect(result).toEqual(error({ type: 'RecipeNotFoundError', error: new Error(`Recipe with id ${id} not found`) }));
   });
 });

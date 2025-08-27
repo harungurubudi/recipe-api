@@ -1,10 +1,15 @@
+// Errors definition
+export type RecipeError =
+  | { type: 'RecipeNotFoundError'; error: Error; }
+
+
+// RecipeID definition
 export type RecipeID = number & { readonly brand: unique symbol };
 
 export const RecipeID = {
   of: (id: number): RecipeID => id as RecipeID,
   value: (id: RecipeID): number => id as number,
 }
-
 
 export class Recipe {
   /**

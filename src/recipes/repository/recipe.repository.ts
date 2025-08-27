@@ -2,10 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { RecipeEntity } from "./entities/recipe.entity";
 import { Repository } from "typeorm"
 import { InjectRepository } from "@nestjs/typeorm";
-import { Recipe, RecipeID } from "../domain/recipe.entity";
+import { Recipe, RecipeID, RecipeError } from "../domain/recipe.entity";
+import { Result, ok, error } from "../../shared/result";
 
 export abstract class RecipeRepository {
-  abstract getByID(id: RecipeID): Promise<Recipe | null>;
+  abstract getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>>;
 }
 
 @Injectable()
@@ -26,14 +27,14 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
    * @param id the ID of the recipe to be retrieved
    * @returns the recipe with the given ID, or null if none exists
    */
-  async getByID(id: RecipeID): Promise<Recipe | null> {
+  async getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>> {
     return this.repository
       .findOneBy({ id: RecipeID.value(id) })
       .then((user) => {
         if (user) {
-          return user.toDomain()
+          return ok(user.toDomain())
         }
-        return null
+        return error({ type: 'RecipeNotFoundError', error: new Error(`Recipe with id ${id} not found`) })
       })
   }
 }
