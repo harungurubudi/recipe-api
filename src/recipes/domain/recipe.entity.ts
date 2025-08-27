@@ -6,7 +6,7 @@ export type RecipeID = number & { readonly brand: unique symbol };
  * @param id the number to narrow
  * @returns the narrowed `RecipeID`
  */
-function RecipeID(id: number): RecipeID {
+export function NewRecipeID(id: number): RecipeID {
   return id as RecipeID;
 }
 
