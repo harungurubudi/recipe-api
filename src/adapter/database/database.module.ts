@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RecipeEntity } from 'recipes/repository/entities/recipe.entity';
 
 
 @Module({
@@ -30,7 +31,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           synchronize: synchronize,
           migrations: [__dirname + '/../../../migrations/*{.ts,.js}'],
           migrationsRun: true,
-          entities: [__dirname + '/../../../recipes/repositories/entities/*.entity.{.ts,.js}'],
+          entities: [RecipeEntity],
         }
       },
     }),

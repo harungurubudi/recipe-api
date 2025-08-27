@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
-import { CreateRecipeDto } from './dto/create-recipe.dto';
-import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { RecipeID } from './domain/recipe.entity';
+import { RecipeResponseDto } from './dto/response.dto';
 
 @Controller('recipes')
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
-  @Post()
-  create(@Body() createRecipeDto: CreateRecipeDto) {
-    return this.recipesService.create(createRecipeDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.recipesService.findAll();
-  }
-
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.recipesService.findOne(+id);
-  }
+  /**
+   * Finds a single recipe by its ID
+   *
+   * @param id the ID of the recipe to be found
+   * @returns the recipe with the given ID, or a `RecipeError` if no such recipe exists
+   */
+  async findOne(@Param('id') id: string): Promise<RecipeResponseDto> {
+    const result = await this.recipesService.findOne(RecipeID.of(+id))
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
-    return this.recipesService.update(+id, updateRecipeDto);
-  }
+    if (result.ok) {
+      return new RecipeResponseDto(result.value)
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.recipesService.remove(+id);
-  }
+    throw new NotFoundException(result.error.error.message)
+  } 
 }
