@@ -1,14 +1,10 @@
 export type RecipeID = number & { readonly brand: unique symbol };
 
-/**
- * Type guard function to narrow a `number` to a `RecipeID`
- *
- * @param id the number to narrow
- * @returns the narrowed `RecipeID`
- */
-export function NewRecipeID(id: number): RecipeID {
-  return id as RecipeID;
+export const RecipeID = {
+  of: (id: number): RecipeID => id as RecipeID,
+  value: (id: RecipeID): number => id as number,
 }
+
 
 export class Recipe {
   /**
