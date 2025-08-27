@@ -1,4 +1,4 @@
-import { Recipe, NewRecipeID, RecipeID } from "src/recipes/domain/recipe.entity"
+import { Recipe, RecipeID } from "../../domain/recipe.entity"
 import { Entity, Column, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity("recipes")
@@ -30,7 +30,7 @@ export class RecipeEntity {
   // Convert entity → domain
   toDomain(): Recipe {
     return new Recipe(
-      NewRecipeID(this.id),
+      RecipeID.of(this.id),
       this.title,
       this.makingTime,
       this.serves,
