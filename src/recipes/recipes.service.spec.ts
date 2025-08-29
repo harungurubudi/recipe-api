@@ -3,7 +3,7 @@ import { RecipeRepository } from './repository/recipe.repository';
 import { RecipeID, Recipe } from './domain/recipe.entity';
 import { ok } from '../shared/result';
 
-describe('RecipesService', () => {
+describe('Service - Recipe Unit Test', () => {
   let service: RecipesService;
   let repository: RecipeRepository
 
@@ -19,7 +19,7 @@ describe('RecipesService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should get by RecipeID and return Recipe', async () => {
+  it('findOne - should return Recipe', async () => {
     // Mock repository behavior
     repository.getByID = jest.fn().mockResolvedValue(ok(
       new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
