@@ -2,7 +2,6 @@
 export type RecipeError =
   | { type: 'RecipeNotFoundError'; error: Error; }
 
-
 // RecipeID definition
 export type RecipeID = number & { readonly brand: unique symbol };
 

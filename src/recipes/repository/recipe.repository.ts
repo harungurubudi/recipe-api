@@ -34,7 +34,7 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
         if (user) {
           return ok(user.toDomain())
         }
-        return error({ type: 'RecipeNotFoundError', error: new Error(`Recipe with id ${id} not found`) })
+        return error({ type: 'RecipeNotFoundError', error: new Error('No recipe found') })
       })
   }
 }
