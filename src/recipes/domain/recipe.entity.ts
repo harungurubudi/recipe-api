@@ -34,3 +34,22 @@ export class Recipe {
     public updatedAt: Date
   ) {}
 }
+
+export class RecipeInput {
+  /**
+   * Construct a new RecipeInput with the given parameters
+   *
+   * @param title the title of the recipe
+   * @param makingTime the time it takes to make the recipe
+   * @param serves how many people the recipe serves
+   * @param ingredients the ingredients used in the recipe
+   * @param cost the cost of the recipe
+   */
+  constructor(
+    public title: string,
+    public makingTime: string,
+    public serves: string,
+    public ingredients: string,
+    public cost: number,
+  ) {}
+}

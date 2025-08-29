@@ -6,16 +6,16 @@ export class RecipeEntity {
   @PrimaryGeneratedColumn("increment")
   id: number
 
-  @Column({name: "title", type: "varchar", length: 100, collation: "utf8_unicode_ci" })
+  @Column({name: "title", type: "varchar", length: 100})
   title: string
 
-  @Column({name: "making_time", type: "varchar", length: 100, collation: "utf8_unicode_ci" })
+  @Column({name: "making_time", type: "varchar", length: 100})
   makingTime: string
 
-  @Column({name: "serves", type: "varchar", length: 100, collation: "utf8_unicode_ci" })
+  @Column({name: "serves", type: "varchar", length: 100})
   serves: string
 
-  @Column({name: "ingredients", type: "varchar", length: 300, collation: "utf8_unicode_ci" })
+  @Column({name: "ingredients", type: "varchar", length: 300})
   ingredients: string
 
   @Column({name: "cost", type: "int", default: 0 })
