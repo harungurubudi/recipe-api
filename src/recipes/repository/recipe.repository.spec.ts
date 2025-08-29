@@ -49,6 +49,6 @@ describe('TypeOrmRecipeRepository-GetByID', () => {
     const result = await repo.getByID(RecipeID.of(id));
 
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
-    expect(result).toEqual(error({ type: 'RecipeNotFoundError', error: new Error(`Recipe with id ${id} not found`) }));
+    expect(result).toEqual(error({ type: 'RecipeNotFoundError', error: new Error('No recipe found') }));
   });
 });
