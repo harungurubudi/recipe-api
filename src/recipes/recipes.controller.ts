@@ -1,9 +1,11 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { RecipeID } from './domain/recipe.entity';
 import { RecipeResponseDto } from './dto/response.dto';
+import { BriefRecipeDto } from './dto/recipe.dto';
 
 @Controller('recipes')
+@UseInterceptors(ClassSerializerInterceptor)
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
@@ -18,7 +20,9 @@ export class RecipesController {
     const result = await this.recipesService.findOne(RecipeID.of(+id))
 
     if (result.ok) {
-      return new RecipeResponseDto(result.value)
+      return new RecipeResponseDto('Recipe details by id', [
+        new BriefRecipeDto(result.value),
+      ])
     }
 
     throw new NotFoundException(result.error.error.message)
