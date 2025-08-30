@@ -1,8 +1,8 @@
-import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, ValidationPipe, UsePipes } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { RecipeID } from './domain/recipe.entity';
 import { RecipeResponseDto } from './dto/response.dto';
-import { BriefRecipeDto } from './dto/recipe.dto';
+import { BriefRecipeDto, RecipeDto, RecipeDtoMapper, RecipeInputDto } from './dto/recipe.dto';
 
 @Controller('recipes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -26,5 +26,26 @@ export class RecipesController {
     }
 
     throw new NotFoundException(result.error.error.message)
-  } 
+  }
+
+  @Post('')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  /**
+   * Creates a new recipe with the given data
+   *
+   * @param payload the new recipe's data
+   * @returns the newly created recipe, or a `RecipeError` if something goes wrong
+   */
+  async create(@Body() payload: RecipeInputDto): Promise<RecipeResponseDto> {
+    const input = RecipeDtoMapper.toDomain(payload) 
+    const result = await this.recipesService.create(input)
+
+    if (result.ok) {
+      return new RecipeResponseDto('Recipe successfully created', [
+        new RecipeDto(result.value),
+      ])
+    }
+
+    throw new NotFoundException(result.error.error.message)
+  }
 }

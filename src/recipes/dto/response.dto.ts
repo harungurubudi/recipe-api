@@ -1,15 +1,13 @@
 import { Expose, Type } from 'class-transformer';
-import { BriefRecipeDto } from './recipe.dto';
+import { BriefRecipeDto, RecipeDto } from './recipe.dto';
 
 export class RecipeResponseDto {
   @Expose()
   message: string;
 
   @Expose()
-  @Type(() => BriefRecipeDto)
-  recipe: BriefRecipeDto[];
-
-  constructor(message: string, recipes: BriefRecipeDto[]) {
+  recipe: BriefRecipeDto[] | RecipeDto[];
+  constructor(message: string, recipes: BriefRecipeDto[] | RecipeDto[]) {
     this.message = message;
     this.recipe = recipes;
   }
