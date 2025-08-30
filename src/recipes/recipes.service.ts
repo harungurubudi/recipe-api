@@ -55,4 +55,13 @@ export class RecipesService {
   async delete(id: RecipeID): Promise<Result<boolean, RecipeError>> {
     return this.repository.delete(id)
   }
+
+  /**
+   * Lists all recipes in the database.
+   *
+   * @returns a list of all recipes in the database, or a `RecipeError` if something goes wrong
+   */
+  async list(): Promise<Result<Recipe[], RecipeError>> {
+    return this.repository.list()
+  }
 }
