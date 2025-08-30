@@ -41,4 +41,13 @@ describe('Service - Recipe Unit Test', () => {
     const result = await service.create(payload);
     expect(result.ok).toBe(true);
   });
+
+  it('delete - should return Recipe', async () => {
+    // Mock repository behavior
+    repository.delete = jest.fn().mockResolvedValue(ok(true));
+
+    const id = RecipeID.of(1);
+    const result = await service.delete(id);
+    expect(result.ok).toBe(true);
+  });
 });

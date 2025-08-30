@@ -45,4 +45,14 @@ export class RecipesService {
   async create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>> {
     return this.repository.create(payload)
   }
+
+  /**
+   * Deletes a recipe by its ID
+   *
+   * @param id the ID of the recipe to be deleted
+   * @returns true if the recipe was successfully deleted, or a `RecipeError` if something went wrong
+   */
+  async delete(id: RecipeID): Promise<Result<boolean, RecipeError>> {
+    return this.repository.delete(id)
+  }
 }
