@@ -1,4 +1,4 @@
-import { Recipe, RecipeID } from "../../domain/recipe.entity"
+import { Recipe, RecipeID, RecipeInput } from "../../domain/recipe.entity"
 import { Entity, Column, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity("recipes")
@@ -52,6 +52,16 @@ export class RecipeEntity {
     entity.cost = recipe.cost
     entity.createdAt = recipe.createdAt
     entity.updatedAt = recipe.updatedAt
+    return entity
+  }
+
+  static fromInput(input: RecipeInput): RecipeEntity {
+    const entity = new RecipeEntity()
+    entity.title = input.title
+    entity.makingTime = input.makingTime
+    entity.serves = input.serves
+    entity.ingredients = input.ingredients
+    entity.cost = input.cost
     return entity
   }
 }
