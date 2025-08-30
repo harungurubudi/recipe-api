@@ -1,7 +1,7 @@
-import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, ValidationPipe, UsePipes, Delete } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { RecipeID } from './domain/recipe.entity';
-import { RecipeResponseDto } from './dto/response.dto';
+import { MessageResponseDTO, RecipeResponseDto } from './dto/response.dto';
 import { BriefRecipeDto, RecipeDto, RecipeDtoMapper, RecipeInputDto } from './dto/recipe.dto';
 
 @Controller('recipes')
@@ -44,6 +44,23 @@ export class RecipesController {
       return new RecipeResponseDto('Recipe successfully created', [
         new RecipeDto(result.value),
       ])
+    }
+
+    throw new NotFoundException(result.error.error.message)
+  }
+
+  @Delete(':id')
+  /**
+   * Deletes a recipe by its ID
+   *
+   * @param id the ID of the recipe to be deleted
+   * @returns an empty response if the recipe was successfully deleted, or a `RecipeError` if something went wrong
+   */
+  async delete(@Param('id') id: string): Promise<MessageResponseDTO> {
+    const result = await this.recipesService.delete(RecipeID.of(+id))
+
+    if (result.ok) {
+      return new MessageResponseDTO('Recipe successfully deleted')
     }
 
     throw new NotFoundException(result.error.error.message)

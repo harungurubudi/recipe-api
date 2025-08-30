@@ -12,3 +12,11 @@ export class RecipeResponseDto {
     this.recipe = recipes;
   }
 }
+
+export class MessageResponseDTO {
+  @Expose()
+  message: string;
+  constructor(message: string) {
+    this.message = message;
+  }
+}

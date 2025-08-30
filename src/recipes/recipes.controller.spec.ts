@@ -3,7 +3,7 @@ import { RecipesService } from './recipes.service';
 import { RecipeID, Recipe } from './domain/recipe.entity';
 import { error, ok } from '../shared/result';
 import { BriefRecipeDto, RecipeDto, RecipeInputDto } from './dto/recipe.dto';
-import { RecipeResponseDto } from './dto/response.dto';
+import { MessageResponseDTO, RecipeResponseDto } from './dto/response.dto';
 import { DataSource } from 'typeorm';
 import { RecipeEntity } from './repository/entities/recipe.entity';
 import { TypeOrmRecipeRepository } from './repository/recipe.repository';
@@ -17,6 +17,7 @@ describe('Controller - Recipe Unit Test', () => {
     service = {
       findOne: jest.fn(),
       create: jest.fn(),
+      delete: jest.fn(),
     } as unknown as RecipesService;
 
     controller = new RecipesController(service);
@@ -80,6 +81,20 @@ describe('Controller - Recipe Unit Test', () => {
     service.create = jest.fn().mockResolvedValue(error({ type: 'Failed to save', error: new Error(errorMessage) }));
 
     await expect(controller.create(payload)).rejects.toThrow(errorMessage);
+  });
+
+  it('delete - should delete Recipe', async () => {
+      service.delete = jest.fn().mockResolvedValue(ok(true));
+      const result = await controller.delete('1');
+      expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
+  })
+
+  it('delete - should return error from service', async () => {
+    const errorMessage = "Failed to delete recipe"
+    // Mock service behavior
+    service.delete = jest.fn().mockResolvedValue(error({ type: 'Failed to delete', error: new Error(errorMessage) }));
+
+    await expect(controller.delete('1')).rejects.toThrow(errorMessage);
   });
 });
 
@@ -171,5 +186,39 @@ describe('Integration Testing - create', () => {
     expect(recipe.serves).toBe(payload.serves);
     expect(recipe.ingredients).toBe(payload.ingredients);
     expect(recipe.cost).toBe(payload.cost);
+  });
+});
+
+describe('Integration Testing - delete', () => {
+  let dataSource: DataSource;
+  let controller: RecipesController;
+
+  beforeEach(async () => {
+    ({ dataSource, controller } = await  createTestComponent());
+  });
+
+  afterEach(async () => {
+    if (dataSource && dataSource.isInitialized) {
+      await dataSource.destroy();
+    }
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  it('delete - should be succeeded', async () => {
+    const id = RecipeID.of(1);
+    const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
+    
+    await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
+    
+    const result = await controller.delete('1');
+    expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
+  });
+
+  it('delete - should return error on not found', async () => {
+    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await dataSource.destroy();
   });
 });
