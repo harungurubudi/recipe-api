@@ -52,4 +52,9 @@ export class RecipeInput {
     public ingredients: string,
     public cost: number,
   ) {}
+
+  toEntity(): Recipe {
+    const now = new Date();
+    return new Recipe(RecipeID.of(0), this.title, this.makingTime, this.serves, this.ingredients, this.cost, now, now);
+  }
 }
