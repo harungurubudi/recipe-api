@@ -3,6 +3,8 @@ export type RecipeError =
   | { type: 'RecipeNotFoundError'; error: Error; }
   | { type: 'RecipeSaveError'; error: Error; }
   | { type: 'RecipeDeleteError'; error: Error; }
+  | { type: 'RecipeListError'; error: Error; }
+  
 
 // RecipeID definition
 export type RecipeID = number & { readonly brand: unique symbol };

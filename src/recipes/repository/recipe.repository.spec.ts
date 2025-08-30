@@ -17,7 +17,7 @@ describe('Repository - findOneBy', () => {
         {
           provide: getRepositoryToken(RecipeEntity),
           useValue: {
-            findOneBy: jest.fn(), // directly mock the method you need
+            findOneBy: jest.fn(),
           },
         },
       ],
@@ -124,7 +124,6 @@ describe('Repository - create', () => {
   });
 });
 
-
 describe('Repository - delete', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
@@ -136,7 +135,7 @@ describe('Repository - delete', () => {
         {
           provide: getRepositoryToken(RecipeEntity),
           useValue: {
-            findOneBy: jest.fn(), // directly mock the method you need
+            findOneBy: jest.fn(),
             delete: jest.fn(),
           },
         },
@@ -174,4 +173,43 @@ describe('Repository - delete', () => {
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id: 1 });
     expect(result).toEqual(error({ type: 'RecipeDeleteError', error: new Error('Failed to delete recipe') }));
   });
+});
+
+describe('Repository - list', () => {
+  let repo: TypeOrmRecipeRepository;
+  let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TypeOrmRecipeRepository,
+        {
+          provide: getRepositoryToken(RecipeEntity),
+          useValue: {
+            find: jest.fn(), 
+          },
+        },
+      ],
+    }).compile();
+
+    repo = module.get(TypeOrmRecipeRepository);
+    ormRepo = module.get(getRepositoryToken(RecipeEntity));
+  });
+
+  it('list - should return list of recipe', async () => {
+    const recipes = [
+      new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date()),
+      new Recipe(RecipeID.of(2), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date()),
+    ];
+    const entities = recipes.map(r => RecipeEntity.fromDomain(r));
+    (ormRepo.find as jest.Mock).mockResolvedValue(entities);
+    const result = await repo.list();
+    expect(result).toEqual(ok(recipes));
+  })
+
+  it('list - shpould thrown error', async () => {
+    (ormRepo.find as jest.Mock).mockRejectedValue(new Error('any error'));
+    const result = await repo.list();
+    expect(result).toEqual(error({ type: 'RecipeListError', error: new Error('Failed to list recipes') }));
+  })
 });
