@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Recipe, RecipeID, RecipeError } from './domain/recipe.entity';
+import { Recipe, RecipeID, RecipeError, RecipeInput } from './domain/recipe.entity';
 import { RecipeRepository } from './repository/recipe.repository';
 import { Result } from 'shared/result';
 
@@ -34,5 +34,25 @@ export class RecipesService {
    */
   async findOne(id: RecipeID): Promise<Result<Recipe, RecipeError>> {
     return this.repository.getByID(id)
+  }
+
+  /**
+   * Creates a new recipe with the given data
+   *
+   * @param payload the new recipe's data
+   * @returns the newly created recipe, or a `RecipeError` if something goes wrong
+   */
+  async create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>> {
+    return this.repository.create(payload)
+  }
+
+  /**
+   * Deletes a recipe by its ID
+   *
+   * @param id the ID of the recipe to be deleted
+   * @returns true if the recipe was successfully deleted, or a `RecipeError` if something went wrong
+   */
+  async delete(id: RecipeID): Promise<Result<boolean, RecipeError>> {
+    return this.repository.delete(id)
   }
 }

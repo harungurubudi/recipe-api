@@ -1,6 +1,8 @@
 // Errors definition
 export type RecipeError =
   | { type: 'RecipeNotFoundError'; error: Error; }
+  | { type: 'RecipeSaveError'; error: Error; }
+  | { type: 'RecipeDeleteError'; error: Error; }
 
 // RecipeID definition
 export type RecipeID = number & { readonly brand: unique symbol };
@@ -52,4 +54,9 @@ export class RecipeInput {
     public ingredients: string,
     public cost: number,
   ) {}
+
+  toEntity(): Recipe {
+    const now = new Date();
+    return new Recipe(RecipeID.of(0), this.title, this.makingTime, this.serves, this.ingredients, this.cost, now, now);
+  }
 }

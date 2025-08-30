@@ -1,6 +1,6 @@
 import { RecipesService } from './recipes.service';
 import { RecipeRepository } from './repository/recipe.repository';
-import { RecipeID, Recipe } from './domain/recipe.entity';
+import { RecipeID, Recipe, RecipeInput } from './domain/recipe.entity';
 import { ok } from '../shared/result';
 
 describe('Service - Recipe Unit Test', () => {
@@ -27,6 +27,27 @@ describe('Service - Recipe Unit Test', () => {
 
     const id = RecipeID.of(1);
     const result = await service.findOne(id);
+    expect(result.ok).toBe(true);
+  });
+
+  it('create - should return Recipe', async () => {
+    const payload: RecipeInput = new RecipeInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
+    
+    // Mock repository behavior
+    repository.create = jest.fn().mockResolvedValue(ok(
+      new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
+    ));
+
+    const result = await service.create(payload);
+    expect(result.ok).toBe(true);
+  });
+
+  it('delete - should return Recipe', async () => {
+    // Mock repository behavior
+    repository.delete = jest.fn().mockResolvedValue(ok(true));
+
+    const id = RecipeID.of(1);
+    const result = await service.delete(id);
     expect(result.ok).toBe(true);
   });
 });
