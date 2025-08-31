@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Recipe, RecipeID, RecipeError, RecipeInput } from './domain/recipe.entity';
+import { Recipe, RecipeID, RecipeError, RecipeCreateInput, RecipeUpdateInput } from './domain/recipe.entity';
 import { RecipeRepository } from './repository/recipe.repository';
 import { Result } from 'shared/result';
 
@@ -42,7 +42,7 @@ export class RecipesService {
    * @param payload the new recipe's data
    * @returns the newly created recipe, or a `RecipeError` if something goes wrong
    */
-  async create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>> {
+  async create(payload: RecipeCreateInput): Promise<Result<Recipe, RecipeError>> {
     return this.repository.create(payload)
   }
 
@@ -63,5 +63,16 @@ export class RecipesService {
    */
   async list(): Promise<Result<Recipe[], RecipeError>> {
     return this.repository.list()
+  }
+
+  /**
+   * Updates an existing recipe by ID.
+   *
+   * @param id the ID of the recipe to be updated
+   * @param payload the input data for the updated recipe
+   * @returns the updated recipe, or a `RecipeError` if something goes wrong
+   */
+  async update(id: RecipeID, payload: RecipeUpdateInput): Promise<Result<Recipe, RecipeError>> {
+    return this.repository.update(id, payload)
   }
 }

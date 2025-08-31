@@ -39,7 +39,7 @@ export class Recipe {
   ) {}
 }
 
-export class RecipeInput {
+export class RecipeCreateInput {
   /**
    * Construct a new RecipeInput with the given parameters
    *
@@ -56,9 +56,23 @@ export class RecipeInput {
     public ingredients: string,
     public cost: number,
   ) {}
+}
 
-  toEntity(): Recipe {
-    const now = new Date();
-    return new Recipe(RecipeID.of(0), this.title, this.makingTime, this.serves, this.ingredients, this.cost, now, now);
-  }
+export class RecipeUpdateInput {
+  /**
+   * Construct a new RecipeUpdateInput with the given parameters
+   *
+   * @param title the new title of the recipe
+   * @param makingTime the new time it takes to make the recipe
+   * @param serves the new number of people the recipe serves
+   * @param ingredients the new ingredients used in the recipe
+   * @param cost the new cost of the recipe
+   */
+  constructor(
+    public title?: string,
+    public makingTime?: string,
+    public serves?: string,
+    public ingredients?: string,
+    public cost?: number,
+  ) {}
 }
