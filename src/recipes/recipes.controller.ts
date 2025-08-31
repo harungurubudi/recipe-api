@@ -1,8 +1,8 @@
-import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, ValidationPipe, UsePipes, Delete } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, Patch, ValidationPipe, UsePipes, Delete } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
-import { RecipeID } from './domain/recipe.entity';
+import { RecipeCreateInput, RecipeID, RecipeUpdateInput } from './domain/recipe.entity';
 import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
-import { BriefRecipeDto, RecipeDto, RecipeDtoMapper, RecipeInputDto } from './dto/recipe.dto';
+import { BriefRecipeDto, RecipeDto,  CreateRecipeDto, UpdateRecipeDto } from './dto/recipe.dto';
 
 @Controller('recipes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -36,8 +36,14 @@ export class RecipesController {
    * @param payload the new recipe's data
    * @returns the newly created recipe, or a `RecipeError` if something goes wrong
    */
-  async create(@Body() payload: RecipeInputDto): Promise<RecipeResponseDto> {
-    const input = RecipeDtoMapper.toDomain(payload) 
+  async create(@Body() payload: CreateRecipeDto): Promise<RecipeResponseDto> {
+    const input = new RecipeCreateInput(
+      payload.title,
+      payload.makingTime,
+      payload.serves,
+      payload.ingredients,
+      payload.cost
+    );
     const result = await this.recipesService.create(input)
 
     if (result.ok) {
@@ -77,6 +83,29 @@ export class RecipesController {
 
     if (result.ok) {
       return new RecipesResponseDto(result.value.map(r => new BriefRecipeDto(r)))
+    }
+
+    throw new NotFoundException(result.error.error.message)
+  }
+
+  @Patch('/:id')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  /**
+   * Updates an existing recipe by ID.
+   *
+   * @param id the ID of the recipe to be updated
+   * @param payload the input data for the updated recipe
+   * @returns the updated recipe, or a `RecipeError` if something goes wrong
+   */
+  async update(@Param('id') id: string, @Body() payload: UpdateRecipeDto): Promise<RecipeResponseDto> {
+    const input = new RecipeUpdateInput()
+    Object.assign(input, payload)
+    const result = await this.recipesService.update(RecipeID.of(+id), input)
+
+    if (result.ok) {
+      return new RecipeResponseDto('Recipe successfully updated!', [
+        new RecipeDto(result.value),
+      ])
     }
 
     throw new NotFoundException(result.error.error.message)
