@@ -3,7 +3,7 @@ import { RecipesService } from './recipes.service';
 import { RecipeID, Recipe } from './domain/recipe.entity';
 import { error, ok } from '../shared/result';
 import { BriefRecipeDto, RecipeDto, RecipeInputDto } from './dto/recipe.dto';
-import { MessageResponseDTO, RecipeResponseDto } from './dto/response.dto';
+import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
 import { DataSource } from 'typeorm';
 import { RecipeEntity } from './repository/entities/recipe.entity';
 import { TypeOrmRecipeRepository } from './repository/recipe.repository';
@@ -95,6 +95,24 @@ describe('Controller - Recipe Unit Test', () => {
     service.delete = jest.fn().mockResolvedValue(error({ type: 'Failed to delete', error: new Error(errorMessage) }));
 
     await expect(controller.delete('1')).rejects.toThrow(errorMessage);
+  });
+
+  it('list - should return Recipe', async () => {
+    // Mock service behavior
+    const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
+    service.list = jest.fn().mockResolvedValue(ok([recipe]));
+    const result = await controller.list();
+    expect(result).toMatchObject(new RecipesResponseDto([
+      new BriefRecipeDto(recipe),
+    ]));
+  });
+
+  it('list - should return error from service', async () => {
+    const errorMessage = "Failed to list recipes"
+    // Mock service behavior
+    service.list = jest.fn().mockResolvedValue(error({ type: 'Failed to list', error: new Error(errorMessage) }));
+
+    await expect(controller.list()).rejects.toThrow(errorMessage);
   });
 });
 
@@ -221,4 +239,40 @@ describe('Integration Testing - delete', () => {
     await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
+});
+
+describe('Integration Testing - list', () => {
+  let dataSource: DataSource;
+  let controller: RecipesController;
+
+  beforeEach(async () => {
+    ({ dataSource, controller } = await  createTestComponent());
+  });
+
+  afterEach(async () => {
+    if (dataSource && dataSource.isInitialized) {
+      await dataSource.destroy();
+    }
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  it('list - should be succeeded', async () => {
+    const id = RecipeID.of(1);
+    const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
+    
+    await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
+    
+    const result = await controller.list();
+    expect(result).toMatchObject(new RecipesResponseDto([
+      new BriefRecipeDto(recipe),
+    ]));
+  });
+
+  it('list - should return error on not found', async () => {
+    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await dataSource.destroy();
+  }); 
 });

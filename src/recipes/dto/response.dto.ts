@@ -20,3 +20,11 @@ export class MessageResponseDTO {
     this.message = message;
   }
 }
+
+export class RecipesResponseDto {
+  @Expose()
+  recipes: BriefRecipeDto[];
+  constructor(recipes: BriefRecipeDto[]) {
+    this.recipes = recipes;
+  }
+}
