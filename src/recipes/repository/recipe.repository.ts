@@ -10,6 +10,7 @@ export abstract class RecipeRepository {
   abstract create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>>
   abstract delete(id: RecipeID): Promise<Result<boolean, RecipeError>>
   abstract list(): Promise<Result<Recipe[], RecipeError>>
+  abstract update(id: RecipeID, payload: RecipeInput): Promise<Result<Recipe, RecipeError>>
 }
 
 @Injectable()
@@ -52,7 +53,7 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
     try {
       const recipe = await this.repository.save(RecipeEntity.fromInput(payload))
       if (recipe) {
-        return ok(recipe.toDomain())
+        return this.getByID(RecipeID.of(recipe.id))
       }
       return error({ type: 'RecipeSaveError', error: new Error('Failed to create recipe') })
     } catch (e) {
@@ -89,6 +90,27 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
         type: 'RecipeListError', 
         error: new Error('Failed to list recipes') 
       });
+    }
+  }
+
+  /**
+   * Updates an existing recipe by ID.
+   *
+   * @param id the ID of the recipe to be updated
+   * @param payload the input data for the updated recipe
+   * @returns the updated recipe, or a RecipeError if something goes wrong
+   */
+  async update(id: RecipeID, payload: RecipeInput): Promise<Result<Recipe, RecipeError>> {
+    try {
+      const recipe = await this.repository.findOneBy({ id: RecipeID.value(id) });
+      if (!recipe) {
+        return error({ type: 'RecipeUpdateError', error: new Error('No recipe found') });
+      }
+
+      await this.repository.update({ id: RecipeID.value(id) }, payload);
+      return this.getByID(id);
+    } catch (e) {
+      return error({ type: 'RecipeUpdateError', error: new Error('Failed to update recipe') });
     }
   }
 }

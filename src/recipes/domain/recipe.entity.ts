@@ -4,8 +4,8 @@ export type RecipeError =
   | { type: 'RecipeSaveError'; error: Error; }
   | { type: 'RecipeDeleteError'; error: Error; }
   | { type: 'RecipeListError'; error: Error; }
+  | { type: 'RecipeUpdateError'; error: Error; }
   
-
 // RecipeID definition
 export type RecipeID = number & { readonly brand: unique symbol };
 
