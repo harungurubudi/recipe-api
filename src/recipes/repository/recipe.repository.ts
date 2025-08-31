@@ -2,14 +2,15 @@ import { Injectable } from "@nestjs/common";
 import { RecipeEntity } from "./entities/recipe.entity";
 import { Repository } from "typeorm"
 import { InjectRepository } from "@nestjs/typeorm";
-import { Recipe, RecipeID, RecipeError, RecipeInput } from "../domain/recipe.entity";
+import { Recipe, RecipeID, RecipeError, RecipeCreateInput, RecipeUpdateInput } from "../domain/recipe.entity";
 import { Result, ok, error } from "../../shared/result";
 
 export abstract class RecipeRepository {
   abstract getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>>;
-  abstract create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>>
+  abstract create(payload: RecipeCreateInput): Promise<Result<Recipe, RecipeError>>
   abstract delete(id: RecipeID): Promise<Result<boolean, RecipeError>>
   abstract list(): Promise<Result<Recipe[], RecipeError>>
+  abstract update(id: RecipeID, payload: RecipeUpdateInput): Promise<Result<Recipe, RecipeError>>
 }
 
 @Injectable()
@@ -48,11 +49,14 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
    * @param payload the input data for the new recipe
    * @returns the newly created recipe, or a RecipeError if something goes wrong
    */
-  async create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>> {
+  async create(payload: RecipeCreateInput): Promise<Result<Recipe, RecipeError>> {
     try {
-      const recipe = await this.repository.save(RecipeEntity.fromInput(payload))
+      const entity = new RecipeEntity()
+      Object.assign(entity, payload)
+
+      const recipe = await this.repository.save(entity)
       if (recipe) {
-        return ok(recipe.toDomain())
+        return this.getByID(RecipeID.of(recipe.id))
       }
       return error({ type: 'RecipeSaveError', error: new Error('Failed to create recipe') })
     } catch (e) {
@@ -82,13 +86,32 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
    */
   async list(): Promise<Result<Recipe[], RecipeError>> {
     try {
-      const recipes =  await this.repository.find();
+      const recipes = await this.repository.find();
       return ok(recipes.map(r => r.toDomain()))
     } catch (e) {
-      return error({ 
-        type: 'RecipeListError', 
-        error: new Error('Failed to list recipes') 
+      return error({
+        type: 'RecipeListError',
+        error: new Error('Failed to list recipes')
       });
+    }
+  }
+
+  /**
+   * Updates an existing recipe by ID.
+   *
+   * @param id the ID of the recipe to be updated
+   * @param payload the input data for the updated recipe
+   * @returns the updated recipe, or a RecipeError if something goes wrong
+   */
+  async update(id: RecipeID, payload: RecipeUpdateInput): Promise<Result<Recipe, RecipeError>> {
+    try {
+      const result = await this.repository.update({ id: RecipeID.value(id) }, payload);
+      if (result.affected === 0) {
+        return error({ type: 'RecipeUpdateError', error: new Error('No recipe found') });
+      }
+      return this.getByID(id);
+    } catch (e) {
+      return error({ type: 'RecipeUpdateError', error: new Error('Failed to update recipe') });
     }
   }
 }

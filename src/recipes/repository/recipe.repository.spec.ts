@@ -3,7 +3,7 @@ import { TypeOrmRecipeRepository } from "./recipe.repository";
 import { RecipeEntity } from './entities/recipe.entity';
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Recipe, RecipeID, RecipeInput } from '../domain/recipe.entity';
+import { Recipe, RecipeID, RecipeCreateInput, RecipeUpdateInput } from '../domain/recipe.entity';
 import { ok, error } from '../../shared/result';
 
 describe('Repository - findOneBy', () => {
@@ -74,6 +74,7 @@ describe('Repository - create', () => {
           provide: getRepositoryToken(RecipeEntity),
           useValue: {
             save: jest.fn(),
+            findOneBy: jest.fn(),
           },
         },
       ],
@@ -85,13 +86,16 @@ describe('Repository - create', () => {
 
   it('create - should return newly created Recipe', async () => {
     const id = 1
-    const payload = new RecipeInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
-    const dbInput = RecipeEntity.fromInput(payload);
+    const payload = new RecipeCreateInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
+    const dbInput = new RecipeEntity();
+    Object.assign(dbInput, payload);
 
     const expected = new Recipe(RecipeID.of(id), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
-    const entity = RecipeEntity.fromDomain(expected);
+    const entity = new RecipeEntity();
+    Object.assign(entity, expected);
 
     (ormRepo.save as jest.Mock).mockResolvedValue(entity);
+    (ormRepo.findOneBy as jest.Mock).mockResolvedValue(entity);
 
     const result = await repo.create(payload);
 
@@ -100,8 +104,9 @@ describe('Repository - create', () => {
   });
 
   it('create - should return error', async () => {
-    const payload = new RecipeInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
-    const dbInput = RecipeEntity.fromInput(payload);
+    const payload = new RecipeCreateInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
+    const dbInput = new RecipeEntity();
+    Object.assign(dbInput, payload);
 
     (ormRepo.save as jest.Mock).mockResolvedValue(null);
 
@@ -112,8 +117,9 @@ describe('Repository - create', () => {
   });
 
   it('create - should thrown error', async () => {
-    const payload = new RecipeInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
-    const dbInput = RecipeEntity.fromInput(payload);
+    const payload = new RecipeCreateInput("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000);
+    const dbInput = new RecipeEntity();
+    Object.assign(dbInput, payload);
 
     (ormRepo.save as jest.Mock).mockRejectedValue(new Error('any error'));
 
@@ -212,4 +218,59 @@ describe('Repository - list', () => {
     const result = await repo.list();
     expect(result).toEqual(error({ type: 'RecipeListError', error: new Error('Failed to list recipes') }));
   })
+});
+
+
+describe('Repository - update', () => {
+  let repo: TypeOrmRecipeRepository;
+  let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TypeOrmRecipeRepository,
+        {
+          provide: getRepositoryToken(RecipeEntity),
+          useValue: {
+            update: jest.fn(),
+            findOneBy: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    repo = module.get(TypeOrmRecipeRepository);
+    ormRepo = module.get(getRepositoryToken(RecipeEntity));
+  });
+
+  it('update - should return Not found', async () => {
+    const id = 1;
+    const input = new RecipeUpdateInput("Chicken Curry - Large size", undefined, undefined, undefined, undefined);
+    (ormRepo.update as jest.Mock).mockResolvedValue({ affected: 0 });
+    const result = await repo.update(RecipeID.of(id), input);
+    expect(ormRepo.update).toHaveBeenCalledWith({ id }, input);
+    expect(result).toEqual(error({ type: 'RecipeUpdateError', error: new Error('No recipe found') }));
+  });
+
+  it('update - should return newly created Recipe', async () => {
+    // Define update input
+    const id = 1
+    const input = new RecipeUpdateInput("Chicken Curry - Large size", undefined, undefined, undefined, undefined);
+    const entity = RecipeEntity.fromDomain(new Recipe(RecipeID.of(id), "Chicken Curry - Large size", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date()));
+    
+    (ormRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
+    (ormRepo.findOneBy as jest.Mock).mockResolvedValue(entity);
+
+    const result = await repo.update(RecipeID.of(id), input);
+    expect(ormRepo.update).toHaveBeenCalledWith({ id }, input);
+    expect(result).toEqual(ok(entity.toDomain()));
+  });
+
+  it('update - should thrown error', async () => {
+    const id = 1;
+    const input = new RecipeUpdateInput("Chicken Curry - Large size", undefined, undefined, undefined, undefined);
+    (ormRepo.update as jest.Mock).mockRejectedValue(new Error('any error'));
+    const result = await repo.update(RecipeID.of(id), input);
+    expect(result).toEqual(error({ type: 'RecipeUpdateError', error: new Error('Failed to update recipe') }));
+  });
 });
