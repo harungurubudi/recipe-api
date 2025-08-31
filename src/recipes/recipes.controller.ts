@@ -1,7 +1,7 @@
 import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, ValidationPipe, UsePipes, Delete } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { RecipeID } from './domain/recipe.entity';
-import { MessageResponseDTO, RecipeResponseDto } from './dto/response.dto';
+import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
 import { BriefRecipeDto, RecipeDto, RecipeDtoMapper, RecipeInputDto } from './dto/recipe.dto';
 
 @Controller('recipes')
@@ -61,6 +61,22 @@ export class RecipesController {
 
     if (result.ok) {
       return new MessageResponseDTO('Recipe successfully deleted')
+    }
+
+    throw new NotFoundException(result.error.error.message)
+  }
+
+  @Get('')
+  /**
+   * Lists all recipes in the database.
+   *
+   * @returns a list of all recipes in the database, or a `RecipeError` if something goes wrong
+   */
+  async list(): Promise<RecipesResponseDto> {
+    const result = await this.recipesService.list()
+
+    if (result.ok) {
+      return new RecipesResponseDto(result.value.map(r => new BriefRecipeDto(r)))
     }
 
     throw new NotFoundException(result.error.error.message)

@@ -50,4 +50,14 @@ describe('Service - Recipe Unit Test', () => {
     const result = await service.delete(id);
     expect(result.ok).toBe(true);
   });
+
+  it('list - should return Recipe', async () => {
+    // Mock repository behavior
+    repository.list = jest.fn().mockResolvedValue(ok([
+      new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
+    ]));
+
+    const result = await service.list();
+    expect(result.ok).toBe(true);
+  });
 });

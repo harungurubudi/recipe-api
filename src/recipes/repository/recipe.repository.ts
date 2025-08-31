@@ -9,6 +9,7 @@ export abstract class RecipeRepository {
   abstract getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>>;
   abstract create(payload: RecipeInput): Promise<Result<Recipe, RecipeError>>
   abstract delete(id: RecipeID): Promise<Result<boolean, RecipeError>>
+  abstract list(): Promise<Result<Recipe[], RecipeError>>
 }
 
 @Injectable()
@@ -74,4 +75,20 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
     }
   }
 
+  /**
+   * Lists all recipes in the database.
+   *
+   * @returns a list of all recipes in the database, or a RecipeError if something goes wrong
+   */
+  async list(): Promise<Result<Recipe[], RecipeError>> {
+    try {
+      const recipes =  await this.repository.find();
+      return ok(recipes.map(r => r.toDomain()))
+    } catch (e) {
+      return error({ 
+        type: 'RecipeListError', 
+        error: new Error('Failed to list recipes') 
+      });
+    }
+  }
 }
