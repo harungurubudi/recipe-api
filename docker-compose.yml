@@ -1,9 +1,29 @@
 version: '3.8'
 
 services:
+  recipe-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recipe-api
+    profiles: [app]
+    ports:
+      - ${APP_PORT}:3000
+    env_file:
+    - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    restart: unless-stopped
+    networks:
+      - recipe-network
+    depends_on:
+      - mysql
+
   mysql:
     image: mysql:8.0
     container_name: recipe-mysql
+    profiles: [app, development]
     ports:
       - "${DATABASE_PORT}:3306"
     environment:
