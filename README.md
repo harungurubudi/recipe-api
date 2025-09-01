@@ -3,13 +3,14 @@
 A RESTful API built with [NestJS](https://nestjs.com/) for managing recipes.
 This project was developed as part of the Givery recruitment assignment.
 
-### Features
+## Features
 - Create, read, update, and delete recipes
 - Input validation and error handling
 - MySQL database integration
 - Clean architecture with NestJS modules, services, and controllers
 
-### Installation
+## Development
+To start in development environment, please run this step
 1. Clone this repository 
    ```
    git clone git@github.com:harungurubudi/recipe-api.git
@@ -19,28 +20,46 @@ This project was developed as part of the Givery recruitment assignment.
    ```
    npm install
    ```
-3. Run [Docker Compose setup](#docker-compose-setup)
+3. Run [Docker Compose - Development Setup](#development-setup)
 4. Run the application
    ```
    npm run start:dev
    ```
    The migration will start on first run automatically.
 
-### Docker Compose Setup
+## Docker Compose Setup
 
-This project uses Docker Compose to run PostgreSQL for local development.
+### Development Setup
+
+This steps run Docker Compose for local development environment. It runs container for mysql only.
 
 1. Copy `.env.example` to `.env` and update the variables if needed.
 2. Start the database container:
    ```bash
-   docker-compose up -d
+   docker-compose --profile development up -d
    ```
 3. Stop containers:
    ```bash
-   docker-compose down
+   docker-compose stop
    ```
 
-### Usage
+### Application Setup
+
+This steps run Docker Compose for full deployment. It runs :
+- run container for mysql
+- build app image based on the Dockerfile and run container for it
+
+1. Copy `.env.docker` to `.env` and update the variables if needed.
+2. Start the database container:
+   ```bash
+   docker-compose --profile app up -d
+   ```
+3. Stop containers:
+   ```bash
+   docker-compose stop
+   ```
+
+## Usage
 
 Once the server is running, the API will be available at:
 
@@ -56,7 +75,7 @@ Available endpoints:
 - PATCH /recipes/:id
 - DELETE /recipes/:id
 
-### Project Structure & Domain-Driven Design
+## Project Structure & Domain-Driven Design
 
 This project follows Domain-Driven Design (DDD) principles to separate concerns and keep the core business logic independent from infrastructure and frameworks.
 
@@ -79,7 +98,7 @@ recipe-api/
       └─ recipes.service.ts       # Application layer: implements business use cases
 ```
 
-#### Layer Overview
+### Layer Overview
 
 1. **Domain Layer**
    - Contains pure domain entities (recipe.entity.ts)
