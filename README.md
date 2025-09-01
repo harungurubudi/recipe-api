@@ -130,3 +130,25 @@ recipe-api/
 - Fully **testable** domain logic without requiring a database
 - Easy to **extend and maintain** for future features
 - Makes the project structure **reviewer-friendly** for recruitment assessment
+
+## Test
+
+This project includes both **unit tests** and **integration tests**.
+
+- Unit tests cover isolated modules and services.
+- Integration tests run against an in-memory **SQLite** database (no external setup required).
+
+### Run all tests
+```bash
+npm run test
+```
+
+### Run in verbose mode
+```bash
+npm run test:verbose
+```
+
+### Run with coverage
+```bash
+npm run test:cov
+```
