@@ -52,7 +52,7 @@ This steps run Docker Compose for full deployment. It runs :
 1. Copy `.env.docker` to `.env` and update the variables if needed.
 2. Start the database container:
    ```bash
-   docker-compose --profile app up -d
+   docker-compose --profile app up -d --build   
    ```
 3. Stop containers:
    ```bash
