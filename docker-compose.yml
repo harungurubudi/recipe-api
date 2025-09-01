@@ -19,6 +19,8 @@ services:
       - recipe-network
     depends_on:
       - mysql
+    volumes:
+      - ./logs/:/app/logs/
 
   mysql:
     image: mysql:8.0
