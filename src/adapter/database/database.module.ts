@@ -29,7 +29,7 @@ import { RecipeEntity } from 'recipes/repository/entities/recipe.entity';
           password: configService.get<string>('database.password'),
           database: configService.get<string>('database.name'),
           synchronize: synchronize,
-          migrations: [__dirname + '/../../../migrations/*{.ts,.js}'],
+          migrations: [__dirname + '  /../../migrations/*{.ts,.js}'],
           migrationsRun: true,
           entities: [RecipeEntity],
         }
