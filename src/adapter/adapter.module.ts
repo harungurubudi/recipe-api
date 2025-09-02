@@ -4,6 +4,6 @@ import { DatabaseModule } from './database/database.module';
 import { CacheModule } from './cache/cache.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, CacheModule]
+  imports: [ConfigModule, DatabaseModule, CacheModule],
 })
 export class AdapterModule {}

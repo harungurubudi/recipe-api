@@ -27,7 +27,7 @@ async function bootstrap() {
 
   // Define global pipes
   app.useGlobalPipes(
-    // Define valication pipe
+    // Define valication pipe 
     new ValidationPipe({
       whitelist: true, // strips properties that are not in DTO
       forbidNonWhitelisted: true, // throws error if unknown props are present
