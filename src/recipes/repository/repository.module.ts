@@ -6,7 +6,7 @@ import { TypeOrmRecipeRepository } from './recipe.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RecipeEntity])
+    TypeOrmModule.forFeature([RecipeEntity]),
   ],
   providers: [{
     provide: "RecipeRepository",

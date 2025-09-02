@@ -9,8 +9,15 @@ import { ok, error } from '../../shared/result';
 describe('Repository - findOneBy', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+  let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmRecipeRepository,
@@ -20,6 +27,10 @@ describe('Repository - findOneBy', () => {
             findOneBy: jest.fn(),
           },
         },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: mockCache,
+        }
       ],
     }).compile();
 
@@ -27,16 +38,36 @@ describe('Repository - findOneBy', () => {
     ormRepo = module.get(getRepositoryToken(RecipeEntity));
   });
 
-  it('getByID - should return Recipe', async () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('getByID - should return Recipe from cache', async () => {
+    const id = 1;
+    const now = new Date();
+    const expected = new Recipe(RecipeID.of(id), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, now, now);
+
+    (mockCache.get).mockReturnValue(expected);
+
+    const result = await repo.getByID(RecipeID.of(id));
+
+    expect(mockCache.get).toHaveBeenCalledWith(`recipe:${id}`);
+    expect(ormRepo.findOneBy).toHaveBeenCalledTimes(0);
+    expect(result).toEqual(ok(expected));
+  });
+
+  it('getByID - should return Recipe from database', async () => {
     const id = 1;
     const now = new Date();
     const expected = new Recipe(RecipeID.of(id), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, now, now);
     const dbResult = RecipeEntity.fromDomain(expected);
 
+    (mockCache.get).mockReturnValue(null);
     (ormRepo.findOneBy as jest.Mock).mockResolvedValue(dbResult);
 
     const result = await repo.getByID(RecipeID.of(id));
 
+    expect(mockCache.set).toHaveBeenCalledWith(`recipe:${id}`, dbResult, 60_000);
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
     expect(result).toEqual(ok(expected));
   });
@@ -53,6 +84,8 @@ describe('Repository - findOneBy', () => {
 
   it('getByID - should thrown error', async () => {
     const id = 1;
+    
+    (mockCache.get).mockReturnValue(null);
     (ormRepo.findOneBy as jest.Mock).mockRejectedValue(new Error('any error'));
 
     const result = await repo.getByID(RecipeID.of(id));
@@ -65,8 +98,15 @@ describe('Repository - findOneBy', () => {
 describe('Repository - create', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+  let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmRecipeRepository,
@@ -77,6 +117,10 @@ describe('Repository - create', () => {
             findOneBy: jest.fn(),
           },
         },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: mockCache,
+        }
       ],
     }).compile();
 
@@ -100,6 +144,8 @@ describe('Repository - create', () => {
     const result = await repo.create(payload);
 
     expect(ormRepo.save).toHaveBeenCalledWith(dbInput);
+    expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
+    expect(mockCache.set).toHaveBeenCalledWith(`recipe:${id}`, entity, 60_000);
     expect(result).toEqual(ok(expected));
   });
 
@@ -133,8 +179,14 @@ describe('Repository - create', () => {
 describe('Repository - delete', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+  let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    }
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmRecipeRepository,
@@ -145,6 +197,10 @@ describe('Repository - delete', () => {
             delete: jest.fn(),
           },
         },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: mockCache,
+        }
       ],
     }).compile();
 
@@ -159,10 +215,12 @@ describe('Repository - delete', () => {
 
     (ormRepo.findOneBy as jest.Mock).mockResolvedValue(dbResult);
     (ormRepo.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+    (mockCache.del).mockReturnValue(true);
 
     const result = await repo.delete(RecipeID.of(id));
 
     expect(ormRepo.findOneBy).toHaveBeenCalledWith({ id });
+    expect(mockCache.del).toHaveBeenCalledWith(`recipe:${id}`);
     expect(result).toEqual(ok(true));
   });
 
@@ -184,17 +242,27 @@ describe('Repository - delete', () => {
 describe('Repository - list', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+  let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    }
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmRecipeRepository,
         {
           provide: getRepositoryToken(RecipeEntity),
           useValue: {
-            find: jest.fn(), 
+            find: jest.fn(),
           },
         },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: mockCache,
+        }
       ],
     }).compile();
 
@@ -224,8 +292,14 @@ describe('Repository - list', () => {
 describe('Repository - update', () => {
   let repo: TypeOrmRecipeRepository;
   let ormRepo: jest.Mocked<Repository<RecipeEntity>>;
+  let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    }
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmRecipeRepository,
@@ -236,6 +310,10 @@ describe('Repository - update', () => {
             findOneBy: jest.fn(),
           },
         },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: mockCache,
+        }
       ],
     }).compile();
 
@@ -257,12 +335,14 @@ describe('Repository - update', () => {
     const id = 1
     const input = new RecipeUpdateInput("Chicken Curry - Large size", undefined, undefined, undefined, undefined);
     const entity = RecipeEntity.fromDomain(new Recipe(RecipeID.of(id), "Chicken Curry - Large size", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date()));
-    
+
     (ormRepo.update as jest.Mock).mockResolvedValue({ affected: 1 });
     (ormRepo.findOneBy as jest.Mock).mockResolvedValue(entity);
+    (mockCache.del).mockResolvedValue(true);
 
     const result = await repo.update(RecipeID.of(id), input);
     expect(ormRepo.update).toHaveBeenCalledWith({ id }, input);
+    expect(mockCache.del).toHaveBeenCalledWith(`recipe:${id}`);
     expect(result).toEqual(ok(entity.toDomain()));
   });
 

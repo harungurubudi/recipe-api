@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { RecipeEntity } from "./entities/recipe.entity";
 import { Repository } from "typeorm"
 import { InjectRepository } from "@nestjs/typeorm";
 import { Recipe, RecipeID, RecipeError, RecipeCreateInput, RecipeUpdateInput } from "../domain/recipe.entity";
 import { Result, ok, error } from "../../shared/result";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 
 export abstract class RecipeRepository {
   abstract getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>>;
@@ -12,6 +14,8 @@ export abstract class RecipeRepository {
   abstract list(): Promise<Result<Recipe[], RecipeError>>
   abstract update(id: RecipeID, payload: RecipeUpdateInput): Promise<Result<Recipe, RecipeError>>
 }
+
+const cachePrefix = 'recipe'
 
 @Injectable()
 export class TypeOrmRecipeRepository implements RecipeRepository {
@@ -23,7 +27,10 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
   constructor(
     @InjectRepository(RecipeEntity)
     private readonly repository: Repository<RecipeEntity>,
-  ) { }
+
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache
+  ) {}
 
   /**
    * Retrieves a recipe by ID.
@@ -32,11 +39,23 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
    * @returns the recipe with the given ID, or null if none exists
    */
   async getByID(id: RecipeID): Promise<Result<Recipe, RecipeError>> {
+    const cacheKey = cachePrefix + ':' + RecipeID.value(id).toString()
     try {
-      const recipe = await this.repository.findOneBy({ id: RecipeID.value(id) })
-      if (recipe) {
-        return ok(recipe.toDomain())
+      // Try to get from cache first
+      const cached = await this.cacheManager.get<Recipe>(cacheKey)
+    
+      if (cached) {
+        return ok(cached)
       }
+
+      // If not in cache, get from DB and save to cache
+      const entity = await this.repository.findOneBy({ id: RecipeID.value(id) })
+      if (entity) {
+        const result = entity.toDomain()
+        await this.cacheManager.set(cacheKey, result, 60_000)
+        return ok(result)
+      }
+
       return error({ type: 'RecipeNotFoundError', error: new Error('No recipe found') })
     } catch (e) {
       return error({ type: 'RecipeNotFoundError', error: new Error('Failed to get recipe') })
@@ -65,6 +84,7 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
   }
 
   async delete(id: RecipeID): Promise<Result<boolean, RecipeError>> {
+    const cacheKey = cachePrefix + ':' + RecipeID.value(id).toString()
     try {
       const recipe = await this.repository.findOneBy({ id: RecipeID.value(id) });
       if (!recipe) {
@@ -72,6 +92,7 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
       }
 
       await this.repository.delete({ id: RecipeID.value(id) });
+      await this.cacheManager.del(cacheKey)
       return ok(true);
 
     } catch (e) {
@@ -87,7 +108,12 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
   async list(): Promise<Result<Recipe[], RecipeError>> {
     try {
       const recipes = await this.repository.find();
-      return ok(recipes.map(r => r.toDomain()))
+      return ok(recipes.map(r => {
+        const result = r.toDomain()
+        // Set each element to cache
+        this.cacheManager.set(cachePrefix + ':' + r.id.toString(), result, 60_000)
+        return result
+      }))
     } catch (e) {
       return error({
         type: 'RecipeListError',
@@ -104,11 +130,13 @@ export class TypeOrmRecipeRepository implements RecipeRepository {
    * @returns the updated recipe, or a RecipeError if something goes wrong
    */
   async update(id: RecipeID, payload: RecipeUpdateInput): Promise<Result<Recipe, RecipeError>> {
+    const cacheKey = cachePrefix + ':' + RecipeID.value(id).toString()
     try {
       const result = await this.repository.update({ id: RecipeID.value(id) }, payload);
       if (result.affected === 0) {
         return error({ type: 'RecipeUpdateError', error: new Error('No recipe found') });
       }
+      await this.cacheManager.del(cacheKey)
       return this.getByID(id);
     } catch (e) {
       return error({ type: 'RecipeUpdateError', error: new Error('Failed to update recipe') });
