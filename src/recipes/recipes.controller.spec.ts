@@ -34,7 +34,7 @@ describe('Controller - Recipe Unit Test', () => {
     // Mock service behavior
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.findOne = jest.fn().mockResolvedValue(ok(recipe));
-    const result = await controller.findOne('1');
+    const result = await controller.findOne(1);
     expect(result).toMatchObject(new RecipeResponseDto('Recipe details by id', [
       new BriefRecipeDto(recipe),
     ]));
@@ -45,7 +45,7 @@ describe('Controller - Recipe Unit Test', () => {
     // Mock service behavior
     service.findOne = jest.fn().mockResolvedValue(error({ type: 'RecipeNotFoundError', error: new Error(errorMessage) }));
 
-    await expect(controller.findOne('1')).rejects.toThrow(errorMessage);
+    await expect(controller.findOne(1)).rejects.toThrow(errorMessage);
   });
 
   it('inputDTO - should return error due to invalid input', async () => {
@@ -89,7 +89,7 @@ describe('Controller - Recipe Unit Test', () => {
 
   it('delete - should delete Recipe', async () => {
     service.delete = jest.fn().mockResolvedValue(ok(true));
-    const result = await controller.delete('1');
+    const result = await controller.delete(1);
     expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
   })
 
@@ -98,7 +98,7 @@ describe('Controller - Recipe Unit Test', () => {
     // Mock service behavior
     service.delete = jest.fn().mockResolvedValue(error({ type: 'Failed to delete', error: new Error(errorMessage) }));
 
-    await expect(controller.delete('1')).rejects.toThrow(errorMessage);
+    await expect(controller.delete(1)).rejects.toThrow(errorMessage);
   });
 
   it('list - should return Recipe', async () => {
@@ -125,7 +125,7 @@ describe('Controller - Recipe Unit Test', () => {
 
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.update = jest.fn().mockResolvedValue(ok(recipe));
-    const result = await controller.update('1', payload);
+    const result = await controller.update(1, payload);
 
     const updateInput = new RecipeUpdateInput();
     Object.assign(updateInput, payload);
@@ -200,14 +200,14 @@ describe('Integration Testing - findOne', () => {
 
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
 
-    const result = await controller.findOne('1');
+    const result = await controller.findOne(1);
     expect(result).toMatchObject(new RecipeResponseDto('Recipe details by id', [
       new BriefRecipeDto(recipe),
     ]));
   });
 
   it('findOne - should return error on not found', async () => {
-    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne(2)).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
@@ -268,12 +268,12 @@ describe('Integration Testing - delete', () => {
 
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
 
-    const result = await controller.delete('1');
+    const result = await controller.delete(1);
     expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
   });
 
   it('delete - should return error on not found', async () => {
-    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne(2)).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
@@ -309,7 +309,7 @@ describe('Integration Testing - list', () => {
   });
 
   it('list - should return error on not found', async () => {
-    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne(2)).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
@@ -338,7 +338,7 @@ describe('Integration Testing - update', () => {
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
     const payload = new UpdateRecipeDto()
     payload.title = "Chicken Curry - Large size"
-    const result = await controller.update('1', payload);
+    const result = await controller.update(1, payload);
     const resultRecipe = result.recipe[0];
     expect(resultRecipe.title).toBe(payload.title);
     expect(resultRecipe.makingTime).toBe(recipe.makingTime);
@@ -348,7 +348,7 @@ describe('Integration Testing - update', () => {
   });
 
   it('update - should return error on not found', async () => {
-    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne(2)).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
