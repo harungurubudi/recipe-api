@@ -8,6 +8,9 @@ import { DataSource } from 'typeorm';
 import { RecipeEntity } from './repository/entities/recipe.entity';
 import { TypeOrmRecipeRepository } from './repository/recipe.repository';
 import { validate } from 'class-validator';
+import { Test } from '@nestjs/testing';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CacheModule } from '@nestjs/cache-manager';
 
 describe('Controller - Recipe Unit Test', () => {
   let controller: RecipesController;
@@ -51,7 +54,7 @@ describe('Controller - Recipe Unit Test', () => {
      * - Serves should be error. It should be 4 people, 4 servings
      * - Cost should be error. It should be number
      * - Ingredients should be error. It should be string
-     */ 
+     */
     const payload = new CreateRecipeDto("Chicken Curry", "45", "4 group", "", 0)
     const validationError = await validate(payload);
     expect(validationError.length).toBe(4);
@@ -65,12 +68,12 @@ describe('Controller - Recipe Unit Test', () => {
 
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.create = jest.fn().mockResolvedValue(ok(recipe));
-    
+
     const result = await controller.create(payload);
     expect(result).toMatchObject(new RecipeResponseDto('Recipe successfully created', [
       new RecipeDto(recipe),
     ]));
-    
+
   });
 
   it('create - should return error from service', async () => {
@@ -85,9 +88,9 @@ describe('Controller - Recipe Unit Test', () => {
   });
 
   it('delete - should delete Recipe', async () => {
-      service.delete = jest.fn().mockResolvedValue(ok(true));
-      const result = await controller.delete('1');
-      expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
+    service.delete = jest.fn().mockResolvedValue(ok(true));
+    const result = await controller.delete('1');
+    expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
   })
 
   it('delete - should return error from service', async () => {
@@ -119,11 +122,11 @@ describe('Controller - Recipe Unit Test', () => {
   it('update - should update Recipe', async () => {
     const payload = new UpdateRecipeDto();
     payload.title = "Chicken Curry - Large size"
-    
+
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.update = jest.fn().mockResolvedValue(ok(recipe));
     const result = await controller.update('1', payload);
-    
+
     const updateInput = new RecipeUpdateInput();
     Object.assign(updateInput, payload);
     expect(service.update).toHaveBeenCalledWith(RecipeID.of(1), updateInput);
@@ -147,19 +150,28 @@ type testComponent = {
 }
 
 async function createTestComponent(): Promise<testComponent> {
-  const dataSource = new DataSource({
-    type: 'sqlite',
-    database: ':memory:',
-    synchronize: true, // auto create schema
-    entities: [RecipeEntity],
-  });
 
-  await dataSource.initialize();
+  const module = await Test.createTestingModule({
+    imports: [
+      TypeOrmModule.forRoot({
+        type: 'sqlite',
+        database: ':memory:',
+        entities: [RecipeEntity],
+        synchronize: true,
+      }),
+      TypeOrmModule.forFeature([RecipeEntity]),
+      CacheModule.register(),
+    ],
+    providers: [TypeOrmRecipeRepository],
+  }).compile();
 
-  const repository = new TypeOrmRecipeRepository(dataSource.getRepository(RecipeEntity));
+  const repository = module.get(TypeOrmRecipeRepository);
+
   const service = new RecipesService(repository);
 
   const controller = new RecipesController(service);
+
+  const dataSource = module.get(DataSource);
 
   return { dataSource, controller };
 }
@@ -169,7 +181,7 @@ describe('Integration Testing - findOne', () => {
   let controller: RecipesController;
 
   beforeEach(async () => {
-    ({ dataSource, controller } = await  createTestComponent());
+    ({ dataSource, controller } = await createTestComponent());
   });
 
   afterEach(async () => {
@@ -185,9 +197,9 @@ describe('Integration Testing - findOne', () => {
   it('findOne - should return Recipe', async () => {
     const id = RecipeID.of(1);
     const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
-    
+
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
-    
+
     const result = await controller.findOne('1');
     expect(result).toMatchObject(new RecipeResponseDto('Recipe details by id', [
       new BriefRecipeDto(recipe),
@@ -195,7 +207,7 @@ describe('Integration Testing - findOne', () => {
   });
 
   it('findOne - should return error on not found', async () => {
-    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
@@ -205,7 +217,7 @@ describe('Integration Testing - create', () => {
   let controller: RecipesController;
 
   beforeEach(async () => {
-    ({ dataSource, controller } = await  createTestComponent());
+    ({ dataSource, controller } = await createTestComponent());
   });
 
   afterEach(async () => {
@@ -220,7 +232,7 @@ describe('Integration Testing - create', () => {
 
   it('create - should return Recipe', async () => {
     const payload = new CreateRecipeDto("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000)
-     
+
     const result = await controller.create(payload);
     const recipe = result.recipe[0];
 
@@ -237,7 +249,7 @@ describe('Integration Testing - delete', () => {
   let controller: RecipesController;
 
   beforeEach(async () => {
-    ({ dataSource, controller } = await  createTestComponent());
+    ({ dataSource, controller } = await createTestComponent());
   });
 
   afterEach(async () => {
@@ -253,15 +265,15 @@ describe('Integration Testing - delete', () => {
   it('delete - should be succeeded', async () => {
     const id = RecipeID.of(1);
     const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
-    
+
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
-    
+
     const result = await controller.delete('1');
     expect(result).toMatchObject(new MessageResponseDTO('Recipe successfully deleted'));
   });
 
   it('delete - should return error on not found', async () => {
-    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
@@ -271,7 +283,7 @@ describe('Integration Testing - list', () => {
   let controller: RecipesController;
 
   beforeEach(async () => {
-    ({ dataSource, controller } = await  createTestComponent());
+    ({ dataSource, controller } = await createTestComponent());
   });
 
   afterEach(async () => {
@@ -287,9 +299,9 @@ describe('Integration Testing - list', () => {
   it('list - should be succeeded', async () => {
     const id = RecipeID.of(1);
     const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
-    
+
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
-    
+
     const result = await controller.list();
     expect(result).toMatchObject(new RecipesResponseDto([
       new BriefRecipeDto(recipe),
@@ -297,17 +309,17 @@ describe('Integration Testing - list', () => {
   });
 
   it('list - should return error on not found', async () => {
-    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
     await dataSource.destroy();
-  }); 
+  });
 });
 
 describe('Integration Testing - update', () => {
   let dataSource: DataSource;
   let controller: RecipesController;
-  
+
   beforeEach(async () => {
-    ({ dataSource, controller } = await  createTestComponent());
+    ({ dataSource, controller } = await createTestComponent());
   });
 
   afterEach(async () => {
@@ -336,7 +348,7 @@ describe('Integration Testing - update', () => {
   });
 
   it('update - should return error on not found', async () => {
-    await expect( controller.findOne('2')).rejects.toThrow('No recipe found');
+    await expect(controller.findOne('2')).rejects.toThrow('No recipe found');
     await dataSource.destroy();
   });
 });
