@@ -49,6 +49,35 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: recipe-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - .docker/redis/data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - recipe-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   recipe-network:
     driver: bridge
