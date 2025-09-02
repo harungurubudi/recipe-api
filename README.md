@@ -131,6 +131,22 @@ recipe-api/
 - Easy to **extend and maintain** for future features
 - Makes the project structure **reviewer-friendly** for recruitment assessment
 
+## Cache
+
+Instead of implementing caching in the application (controller) layer, the cache is placed in the repository layer. The reasons are:
+
+1. **Separation of concerns**  
+   The application/HTTP layer should not care how data is fetched, only that it's fetched. Pushing cache logic down keeps the presentation layer clean and focused.
+
+2. **Persistence across presentation layers**  
+   If in the future this app exposes the same data via REST, GraphQL, gRPC, or CLI, all layers benefit from the repository cache automatically.
+
+3. **Reusability**  
+   Multiple use cases (read by ID, list, etc.) can hit the same repository and share cached data.
+
+4. **Consistency with DDD**  
+   The repository is responsible for data access. Cache is just another data source alongside the DB, so letting the repository decide where to fetch data keeps the domain model clean.
+
 ## Test
 
 This project includes both **unit tests** and **integration tests**.

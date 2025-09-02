@@ -11,5 +11,10 @@ export default () => ({
     name: process.env.DATABASE_NAME ?? "recipe_db",
     // make sure this is "require" in production
     ssl_mode: process.env.DATABASE_SSL_MODE ?? "require",
-  },  
+  },
+  redis: {
+    host: process.env.REDIS_HOST ?? "localhost",
+    port: parseInt(process.env.REDIS_PORT ?? "6379", 10),
+    password: process.env.REDIS_PASSWORD ?? "",
+  }
 });

@@ -18,7 +18,7 @@ export class RecipesController {
    */
   async findOne(@Param('id') id: string): Promise<RecipeResponseDto> {
     const result = await this.recipesService.findOne(RecipeID.of(+id))
-
+    
     if (result.ok) {
       return new RecipeResponseDto('Recipe details by id', [
         new BriefRecipeDto(result.value),
