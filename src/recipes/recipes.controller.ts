@@ -3,6 +3,8 @@ import { RecipesService } from './recipes.service';
 import { RecipeCreateInput, RecipeID, RecipeUpdateInput } from './domain/recipe.entity';
 import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
 import { BriefRecipeDto, RecipeDto,  CreateRecipeDto, UpdateRecipeDto } from './dto/recipe.dto';
+import { ParseIntPipe } from '@nestjs/common';
+
 
 @Controller('recipes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -16,8 +18,8 @@ export class RecipesController {
    * @param id the ID of the recipe to be found
    * @returns the recipe with the given ID, or a `RecipeError` if no such recipe exists
    */
-  async findOne(@Param('id') id: string): Promise<RecipeResponseDto> {
-    const result = await this.recipesService.findOne(RecipeID.of(+id))
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<RecipeResponseDto> {
+    const result = await this.recipesService.findOne(RecipeID.of(id))
     
     if (result.ok) {
       return new RecipeResponseDto('Recipe details by id', [
@@ -62,8 +64,8 @@ export class RecipesController {
    * @param id the ID of the recipe to be deleted
    * @returns an empty response if the recipe was successfully deleted, or a `RecipeError` if something went wrong
    */
-  async delete(@Param('id') id: string): Promise<MessageResponseDTO> {
-    const result = await this.recipesService.delete(RecipeID.of(+id))
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<MessageResponseDTO> {
+    const result = await this.recipesService.delete(RecipeID.of(id))
 
     if (result.ok) {
       return new MessageResponseDTO('Recipe successfully deleted')
@@ -97,10 +99,10 @@ export class RecipesController {
    * @param payload the input data for the updated recipe
    * @returns the updated recipe, or a `RecipeError` if something goes wrong
    */
-  async update(@Param('id') id: string, @Body() payload: UpdateRecipeDto): Promise<RecipeResponseDto> {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() payload: UpdateRecipeDto): Promise<RecipeResponseDto> {
     const input = new RecipeUpdateInput()
     Object.assign(input, payload)
-    const result = await this.recipesService.update(RecipeID.of(+id), input)
+    const result = await this.recipesService.update(RecipeID.of(id), input)
 
     if (result.ok) {
       return new RecipeResponseDto('Recipe successfully updated!', [
