@@ -4,7 +4,9 @@ import { RecipeCreateInput, RecipeID, RecipeUpdateInput } from './domain/recipe.
 import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
 import { BriefRecipeDto, RecipeDto,  CreateRecipeDto, UpdateRecipeDto } from './dto/recipe.dto';
 import { ParseIntPipe } from '@nestjs/common';
-
+import { validate } from 'class-validator';
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('recipes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -37,7 +39,14 @@ export class RecipesController {
    * @param payload the new recipe's data
    * @returns the newly created recipe, or a `RecipeError` if something goes wrong
    */
-  async create(@Body() payload: CreateRecipeDto): Promise<RecipeResponseDto> {
+  async create(@Body() body: object): Promise<RecipeResponseDto|MessageResponseDTO> {
+    // Validate and transform the input. This part should be done in the DTO. But, since the test require to give 200, we are doing it here.
+    const payload = plainToInstance(CreateRecipeDto, body)
+    const validationErrors = await validate(payload)
+    if (validationErrors.length > 0) {
+      return new MessageResponseDTO('Recipe creation failed!')
+    }
+
     const input = new RecipeCreateInput(
       payload.title,
       payload.makingTime,
@@ -90,7 +99,6 @@ export class RecipesController {
   }
 
   @Patch('/:id')
-  @UsePipes(new ValidationPipe({ transform: true }))
   /**
    * Updates an existing recipe by ID.
    *
@@ -98,7 +106,14 @@ export class RecipesController {
    * @param payload the input data for the updated recipe
    * @returns the updated recipe, or a `RecipeError` if something goes wrong
    */
-  async update(@Param('id', ParseIntPipe) id: number, @Body() payload: UpdateRecipeDto): Promise<RecipeResponseDto> {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() body: object): Promise<RecipeResponseDto|MessageResponseDTO> {
+    // Validate and transform input. This part should be done in the DTO. But, since the test require to give 200, we are doing it here.
+    const payload = plainToInstance(CreateRecipeDto, body)
+    const validationErrors = await validate(payload)
+    if (validationErrors.length > 0) {
+      return new MessageResponseDTO('Recipe creation failed!')
+    }
+    
     const input = new RecipeUpdateInput()
     Object.assign(input, payload)
     const result = await this.recipesService.update(RecipeID.of(id), input)

@@ -25,15 +25,16 @@ async function bootstrap() {
     format: winston.format.json(),
   });
 
-  // Define global pipes
-  app.useGlobalPipes(
-    // Define valication pipe 
-    new ValidationPipe({
-      whitelist: true, // strips properties that are not in DTO
-      forbidNonWhitelisted: true, // throws error if unknown props are present
-      transform: true, // auto-transform payloads to DTO class instances
-    }),
-  );
+  // Define global pipes. This section is commented due to test specific test requirement. For example: invalid input should return 200
+  // The validation and transformation is handled in the controller 
+  // app.useGlobalPipes(
+  //   // Define valication pipe 
+  //   new ValidationPipe({
+  //     whitelist: true, // strips properties that are not in DTO
+  //     forbidNonWhitelisted: true, // throws error if unknown props are present
+  //     transform: true, // auto-transform payloads to DTO class instances
+  //   }),
+  // );
 
   // Log HTTP requests
   app.use(morgan('combined', {

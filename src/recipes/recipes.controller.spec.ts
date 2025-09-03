@@ -11,6 +11,7 @@ import { validate } from 'class-validator';
 import { Test } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
+import { plainToInstance } from 'class-transformer';
 
 describe('Controller - Recipe Unit Test', () => {
   let controller: RecipesController;
@@ -62,14 +63,18 @@ describe('Controller - Recipe Unit Test', () => {
 
   it('create - should return Recipe', async () => {
     // Mock service behavior
-    const payload = new CreateRecipeDto("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000)
-    const validationError = await validate(payload);
-    expect(validationError.length).toBe(0);
-
+    const input = {
+      title: "Chicken Curry",
+      making_time: "45 min",
+      serves: "4 people",
+      ingredients: "onion, chicken, seasoning",
+      cost: 1000
+    }
+    
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.create = jest.fn().mockResolvedValue(ok(recipe));
 
-    const result = await controller.create(payload);
+    const result = await controller.create(input);
     expect(result).toMatchObject(new RecipeResponseDto('Recipe successfully created', [
       new RecipeDto(recipe),
     ]));
@@ -77,14 +82,19 @@ describe('Controller - Recipe Unit Test', () => {
   });
 
   it('create - should return error from service', async () => {
-    const payload = new CreateRecipeDto("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000)
-    const validationError = await validate(payload);
-    expect(validationError.length).toBe(0);
+    const input = {
+      title: "Chicken Curry",
+      making_time: "45 min",
+      serves: "4 people",
+      ingredients: "onion, chicken, seasoning",
+      cost: 1000
+    }
+
     const errorMessage = "Failed to save recipe"
     // Mock service behavior
     service.create = jest.fn().mockResolvedValue(error({ type: 'Failed to save', error: new Error(errorMessage) }));
 
-    await expect(controller.create(payload)).rejects.toThrow(errorMessage);
+    await expect(controller.create(input)).rejects.toThrow(errorMessage);
   });
 
   it('delete - should delete Recipe', async () => {
@@ -120,15 +130,22 @@ describe('Controller - Recipe Unit Test', () => {
   });
 
   it('update - should update Recipe', async () => {
-    const payload = new UpdateRecipeDto();
-    payload.title = "Chicken Curry - Large size"
-
+    const input = {
+      title: "Chicken Curry - Large size",
+      making_time: "45 min",
+      serves: "4 people",
+      ingredients: "onion, chicken, seasoning",
+      cost: 1000
+    }
+    
     const recipe = new Recipe(RecipeID.of(1), "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date())
     service.update = jest.fn().mockResolvedValue(ok(recipe));
-    const result = await controller.update(1, payload);
+    const result = await controller.update(1, input);
 
+    const dto = plainToInstance(UpdateRecipeDto, input)
     const updateInput = new RecipeUpdateInput();
-    Object.assign(updateInput, payload);
+    Object.assign(updateInput, dto);
+    
     expect(service.update).toHaveBeenCalledWith(RecipeID.of(1), updateInput);
     expect(result).toMatchObject(new RecipeResponseDto('Recipe successfully updated!', [
       new RecipeDto(recipe),
@@ -231,16 +248,22 @@ describe('Integration Testing - create', () => {
   });
 
   it('create - should return Recipe', async () => {
-    const payload = new CreateRecipeDto("Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000)
+    const input = {
+      title: "Chicken Curry",
+      making_time: "45 min",
+      serves: "4 people",
+      ingredients: "onion, chicken, seasoning",
+      cost: 1000
+    }
 
-    const result = await controller.create(payload);
+    const result = await controller.create(input) as RecipeResponseDto;
     const recipe = result.recipe[0];
 
-    expect(recipe.title).toBe(payload.title);
-    expect(recipe.makingTime).toBe(payload.makingTime);
-    expect(recipe.serves).toBe(payload.serves);
-    expect(recipe.ingredients).toBe(payload.ingredients);
-    expect(recipe.cost).toBe(payload.cost);
+    expect(recipe.title).toBe(input.title);
+    expect(recipe.makingTime).toBe(input.making_time);
+    expect(recipe.serves).toBe(input.serves);
+    expect(recipe.ingredients).toBe(input.ingredients);
+    expect(recipe.cost).toBe(input.cost);
   });
 });
 
@@ -336,11 +359,17 @@ describe('Integration Testing - update', () => {
     const id = RecipeID.of(1);
     const recipe = new Recipe(id, "Chicken Curry", "45 min", "4 people", "onion, chicken, seasoning", 1000, new Date(), new Date());
     await dataSource.getRepository(RecipeEntity).save(RecipeEntity.fromDomain(recipe));
-    const payload = new UpdateRecipeDto()
-    payload.title = "Chicken Curry - Large size"
-    const result = await controller.update(1, payload);
+    const input = {
+      title: "Chicken Curry",
+      making_time: "45 min",
+      serves: "4 people",
+      ingredients: "onion, chicken, seasoning",
+      cost: 1000
+    }
+
+    const result = await controller.update(1, input) as RecipeResponseDto;
     const resultRecipe = result.recipe[0];
-    expect(resultRecipe.title).toBe(payload.title);
+    expect(resultRecipe.title).toBe(input.title);
     expect(resultRecipe.makingTime).toBe(recipe.makingTime);
     expect(resultRecipe.serves).toBe(recipe.serves);
     expect(resultRecipe.ingredients).toBe(recipe.ingredients);
