@@ -31,7 +31,6 @@ export class RecipesController {
   }
 
   @Post('')
-  @UsePipes(new ValidationPipe({ transform: true }))
   /**
    * Creates a new recipe with the given data
    *

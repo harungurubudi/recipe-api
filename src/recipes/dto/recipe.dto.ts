@@ -59,11 +59,12 @@ export class CreateRecipeDto {
   @MaxLength(100)
   title: string;
 
-  @ApiProperty({ example: '30 min' })
+  @ApiProperty({ example: '30 min', name: 'making_time' })
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d+\s?(min|hour|h|m)$/i, { message: 'makingTime must be like "30 min" or "1h"' })
   @MaxLength(100)
+  @Expose({ name: 'making_time' })
   makingTime: string;
 
   @ApiProperty({ example: '2 people' })
@@ -104,10 +105,12 @@ export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
   @MaxLength(100)
   title: string;
 
-  @ApiProperty({ example: '30 min' })
+  @ApiProperty({ example: '30 min', name: 'making_time' })
   @IsString()
   @Matches(/^\d+\s?(min|hour|h|m)$/i, { message: 'makingTime must be like "30 min" or "1h"' })
   @MaxLength(100)
+  @Expose({ name: 'making_time' })
+  @Transform(({ value }) => value)
   makingTime: string;
 
   @ApiProperty({ example: '2 people' })
