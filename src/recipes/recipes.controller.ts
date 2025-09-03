@@ -58,7 +58,7 @@ export class RecipesController {
     const result = await this.recipesService.create(input)
 
     if (result.ok) {
-      return new RecipeResponseDto('Recipe successfully created', [
+      return new RecipeResponseDto('Recipe successfully created!', [
         new RecipeDto(result.value),
       ])
     }
