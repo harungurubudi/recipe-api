@@ -1,4 +1,4 @@
-import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, Patch, ValidationPipe, UsePipes, Delete } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, ClassSerializerInterceptor, Post, Body, Patch, ValidationPipe, UsePipes, Delete, HttpCode } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 import { RecipeCreateInput, RecipeID, RecipeUpdateInput } from './domain/recipe.entity';
 import { MessageResponseDTO, RecipeResponseDto, RecipesResponseDto } from './dto/response.dto';
@@ -33,6 +33,7 @@ export class RecipesController {
   }
 
   @Post('')
+  @HttpCode(200)
   /**
    * Creates a new recipe with the given data
    *
