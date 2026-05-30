@@ -1,7 +1,6 @@
 # Recipe API
 
 A RESTful API built with [NestJS](https://nestjs.com/) for managing recipes.
-This project was developed as part of the Givery recruitment assignment.
 
 ## Features
 - Create, read, update, and delete recipes
